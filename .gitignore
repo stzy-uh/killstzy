@@ -1,0 +1,53 @@
+# 👉 General
+.DS_Store
+Thumbs.db
+*.log
+*.swp
+
+# 👉 Node.js (Vite / React frontend)
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# 👉 Environment files
+.env
+.env.local
+.env.development
+.env.production
+backend/.env
+
+# 👉 Python / FastAPI (backend)
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+.venv/
+venv/
+env/
+pip-log.txt
+
+# 👉 FastAPI cache and IDE tooling
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/instance/
+
+# 👉 Coverage reports
+coverage/
+*.cover
+*.coverage
+*.py,cover
+htmlcov/
+
+# 👉 Editors & IDEs
+.vscode/
+.idea/
+
+# 👉 Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+log.txt
