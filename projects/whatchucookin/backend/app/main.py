@@ -9,6 +9,7 @@ app.include_router(roast.router)
 app.include_router(gossip.router, prefix='/gossip')
 app.include_router(companies.router, prefix='/companies')
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],

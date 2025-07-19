@@ -8,3 +8,5 @@ openai
 python-dotenv
 scrapy
 playwright
+numpy
+yfinance
