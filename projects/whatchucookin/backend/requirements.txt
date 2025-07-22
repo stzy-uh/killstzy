@@ -1,12 +1,18 @@
-fastapi
-uvicorn
-requests
-beautifulsoup4
-pydantic
-httpx
-openai
-python-dotenv
-scrapy
-playwright
-numpy
-yfinance
+fastapi==0.116.1
+uvicorn==0.30.6
+requests==2.31.0
+beautifulsoup4==4.12.3
+pydantic==2.7.4
+python-dotenv==1.0.1
+openai==1.35.10
+
+# Light finance stack (avoid pandas/pyarrow heavy deps)
+yfinance==0.2.40
+pandas==2.2.2
+numpy==1.26.4
+
+# OPTIONAL (only if you truly need it later)
+pyarrow==15.0.2
+
+# Dev / scraping (comment out if not needed yet)
+httpx==0.26.0

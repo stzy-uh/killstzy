@@ -1,97 +1,78 @@
-# app/services/financials.py
-from __future__ import annotations
-import math, time
-from datetime import datetime, timezone
+# backend/app/services/financials.py
+
+import time
 import yfinance as yf
-from .tickers import resolve_ticker
+from typing import Any, Dict, Optional
 
-# simple in-memory cache; upgrade to Redis later
-_CACHE: dict[str, tuple[float, dict]] = {}
-TTL_SEC = 60 * 15  # 15 min
-
-def _cache_get(k: str):
-    item = _CACHE.get(k)
-    if not item:
+def _humanize_number(n: Optional[float]) -> Optional[str]:
+    if n is None:
         return None
-    ts, data = item
-    if time.time() - ts > TTL_SEC:
-        _CACHE.pop(k, None)
-        return None
-    return data
+    m = float(n)
+    for unit in ("", "K", "M", "B", "T"):
+        if abs(m) < 1_000.0:
+            return f"{m:,.2f}{unit}"
+        m /= 1_000.0
+    return f"{m:.2f}P"
 
-def _cache_set(k: str, data: dict):
-    _CACHE[k] = (time.time(), data)
+def get_financials_data(company: str) -> Dict[str, Any]:
+    """
+    Returns FinancialsResponse-compatible dict with:
+      - ticker, price, change%, market_cap
+      - pe, p/s, p/b
+      - op_margin_pct, net_margin_pct
+      - rev_ttm (humanized), rev_growth_yoy, gross_margin_pct
+    """
+    time.sleep(0.1)  # prevent burst
+    tk = yf.Ticker(company)
+    info: Dict[str, Any] = tk.info or {}
 
-def _norm(v):
-    if v is None: return None
-    if isinstance(v, float) and (math.isnan(v) or math.isinf(v)): return None
+    # Basic quote data
+    price = info.get("regularMarketPrice")
+    change_pct = info.get("regularMarketChangePercent")
+    ticker = info.get("symbol", company).upper()
+
+    # Ratios & margins
+    market_cap = _humanize_number(info.get("marketCap"))
+    pe       = info.get("trailingPE")
+    p_s      = info.get("priceToSalesTrailing12Months")
+    p_b      = info.get("priceToBook")
+    opm      = info.get("operatingMargins")
+    npm      = info.get("profitMargins")
+
+    # Revenue TTM & growth
+    rev_ttm_raw = info.get("totalRevenue")
+    rev_ttm     = _humanize_number(rev_ttm_raw)
+    # YoY growth from last year to this
+    rev_growth  = None
     try:
-        return float(v)
+        hist_rev = tk.financials.loc["Total Revenue"]
+        if len(hist_rev) >= 2 and hist_rev.iloc[1] != 0:
+            rev_growth = (hist_rev.iloc[0] - hist_rev.iloc[1]) / hist_rev.iloc[1] * 100
     except Exception:
-        return None
+        pass
 
-def fetch_financials(company: str) -> dict:
-    ticker = resolve_ticker(company)
-    base = {
+    # Gross margin
+    gross_margin = None
+    try:
+        hist_gross = tk.financials.loc["Gross Profit"]
+        if rev_ttm_raw and rev_ttm_raw != 0:
+            gross_margin = hist_gross.iloc[0] / rev_ttm_raw * 100
+    except Exception:
+        pass
+
+    return {
         "company": company,
         "ticker": ticker,
-        "price": None,
-        "change_percent": None,
-        "market_cap": None,
-        "pe": None,
-        "rev_growth_yoy": None,
-        "gross_margin_pct": None,
-        "updated_at": datetime.now(timezone.utc).isoformat()
+        "price": price,
+        "change_percent": change_pct,
+        "market_cap": market_cap,
+        "pe": pe,
+        "ps": p_s,
+        "pb": p_b,
+        "op_margin_pct": (opm * 100) if opm is not None else None,
+        "net_margin_pct": (npm * 100) if npm is not None else None,
+        "rev_ttm": rev_ttm,
+        "rev_growth_yoy": rev_growth,
+        "gross_margin_pct": gross_margin,
+        "error": None,
     }
-    if not ticker:
-        return base
-
-    ck = f"fin:{ticker}"
-    cached = _cache_get(ck)
-    if cached:
-        return cached
-
-    try:
-        t = yf.Ticker(ticker)
-        fast = getattr(t, "fast_info", {}) or {}
-
-        def fg(key):
-            if isinstance(fast, dict):
-                return fast.get(key)
-            return getattr(fast, key, None)
-
-        price = fg("last_price") or fg("last_price_regular") or fg("previous_close")
-        prev_close = fg("previous_close") or price
-        change_pct = ((price - prev_close) / prev_close) * 100 if price and prev_close else None
-        market_cap = fg("market_cap")
-
-        info = {}
-        try:
-            info = t.info or {}
-        except Exception:
-            info = {}
-
-        pe = info.get("trailingPE") or info.get("forwardPE")
-
-        rev_growth = info.get("revenueGrowth")  # often fraction
-        if rev_growth is not None and abs(rev_growth) < 5:
-            rev_growth *= 100
-
-        gross_margin = info.get("grossMargins")
-        if gross_margin is not None and gross_margin < 1:
-            gross_margin *= 100
-
-        base.update({
-            "price": _norm(price),
-            "change_percent": _norm(change_pct),
-            "market_cap": market_cap,
-            "pe": _norm(pe),
-            "rev_growth_yoy": _norm(rev_growth),
-            "gross_margin_pct": _norm(gross_margin),
-        })
-
-    except Exception as e:
-        base["error"] = f"financial_fetch_error: {e}"
-
-    _cache_set(ck, base)
-    return base

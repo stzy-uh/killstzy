@@ -1,14 +1,12 @@
 from fastapi import APIRouter, HTTPException
-from app.schemas import GossipRequest
-from app.services.gossiper import get_gossip_data
+from app.schemas import GossipRequest, GossipResponse
+from app.services.gossiper import generate_gossip
 
 router = APIRouter()
 
-@router.post("/gossip")
-async def gossip(request: GossipRequest):
+@router.post("/", response_model=GossipResponse)
+def gossip(req: GossipRequest):
     try:
-        result = get_gossip_data(request.company)
-        return result
+        return generate_gossip(req.company)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise HTTPException(500, detail=f"gossip_error: {e}")

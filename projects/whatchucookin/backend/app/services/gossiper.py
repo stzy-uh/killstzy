@@ -1,14 +1,15 @@
 from openai import OpenAI
-import os
+from dotenv import load_dotenv
+load_dotenv()
+client = OpenAI()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# backend/app/services/gossiper.py
 
-def get_gossip_data(company: str) -> dict:
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "user", "content": f"Keep it playful but believable, try to be factual.in 1 sentence. No filler. spicy gossip-style rumors about {company}?" 
-             }
-        ]
-    )
-    return {"gossip": response.choices[0].message.content}
+def generate_gossip(company_name: str) -> str:
+    """
+    Stub: generate or fetch some gossip for the given company.
+    Replace this with your actual AI call or scraping logic.
+    """
+    return f"Word on the street is that {company_name} is up to something big…"
+
+
