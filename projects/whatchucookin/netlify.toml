@@ -6,3 +6,16 @@
 
 [build.environment]
     VITE_API_BASE= "https://api.killstzy.com"
+
+    [build]
+  # relative to your repo’s root where your package.json lives:
+  base    = "backend/whatchucookin-frontend"
+  command = "npm install && npm run build"
+  publish = "backend/whatchucookin-frontend/dist"
+
+[dev]
+  # if you want to run 'netlify dev' locally
+  framework = "#custom"
+  command   = "npm install && npm run dev"
+  port      = 5173
+  publish   = "backend/whatchucookin-frontend/dist"
