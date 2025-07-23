@@ -1,0 +1,8 @@
+[build]
+  base    = "projects/whatchucookin/whatchucookin-frontend"
+  publish = "dist"
+  command = "npm ci && npm run build"
+
+
+[build.environment]
+    VITE_API_BASE= "https://api.killstzy.com"
