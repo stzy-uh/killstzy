@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+
 from app.schemas import (
     CompanyRequest,
     IntelResponse,
@@ -15,7 +16,7 @@ from app.services.jobs import get_jobs_data
 from app.services.news import fetch_news_for_company
 from app.services.events import fetch_events_for_company
 
-router = APIRouter()
+router = APIRouter()  # **no** prefix here
 
 @router.post("/intel", response_model=IntelResponse)
 def intel(req: CompanyRequest):

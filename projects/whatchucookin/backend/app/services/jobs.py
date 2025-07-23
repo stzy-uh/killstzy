@@ -1,10 +1,11 @@
-# app/services/jobs.py
 from typing import List, Optional
 import httpx
+from datetime import date, timedelta
+
 from app.schemas import JobsResponse
+
 from .job_sources import GREENHOUSE, LEVER
 
-# Timeouts so your API doesn’t hang
 HTTP_TIMEOUT = 8.0
 
 def _fetch_greenhouse(board_token: str) -> List[dict]:
@@ -13,7 +14,6 @@ def _fetch_greenhouse(board_token: str) -> List[dict]:
         r = client.get(url)
         r.raise_for_status()
         data = r.json()
-    # Each job object has fields like: id, title, location, absolute_url
     return data.get("jobs", [])
 
 def _fetch_lever(board_token: str) -> List[dict]:
@@ -22,7 +22,6 @@ def _fetch_lever(board_token: str) -> List[dict]:
         r = client.get(url)
         r.raise_for_status()
         data = r.json()
-    # Lever returns a list directly
     return data
 
 def _normalize_greenhouse(jobs: List[dict]) -> List[dict]:
@@ -49,17 +48,12 @@ def _normalize_lever(jobs: List[dict]) -> List[dict]:
         })
     return norm
 
-
 def get_jobs_data(
     company: str,
     location: Optional[str] = None,
     keywords: Optional[List[str]] = None,
     remote: Optional[bool] = None,
 ) -> JobsResponse:
-    """
-    Real-ish implementation using public Greenhouse / Lever JSON feeds.
-    If the company isn't configured, returns empty structure.
-    """
     key = company.lower()
     listings: List[dict] = []
 
@@ -71,16 +65,13 @@ def get_jobs_data(
             raw = _fetch_lever(LEVER[key])
             listings = _normalize_lever(raw)
     except Exception:
-        # If upstream fails, just return empty
         listings = []
 
-    # Apply filters
+    # filters
     if location:
         listings = [j for j in listings if j.get("location") and location.lower() in j["location"].lower()]
-
     if remote is not None:
         listings = [j for j in listings if bool(j.get("remote")) is remote]
-
     if keywords:
         kw_lower = [k.lower() for k in keywords]
         listings = [
@@ -90,7 +81,7 @@ def get_jobs_data(
 
     job_count = len(listings)
 
-    # Derive sample keywords from titles (simple)
+    # derive sample_keywords
     words = set()
     for j in listings:
         for token in (j.get("title") or "").lower().split():
@@ -100,10 +91,16 @@ def get_jobs_data(
                 break
         if len(words) >= 8:
             break
-    sample_keywords = sorted(list(words))[:8]
+    sample_keywords = sorted(words)[:8]
 
-    # Distinct locations
+    # top locations
     locs = sorted({j["location"] for j in listings if j.get("location")})[:5]
+
+    # build 7-day flat “history” so sparkline has real data
+    history = []
+    for i in range(7):
+        d = date.today() - timedelta(days=6 - i)
+        history.append({"date": d.isoformat(), "count": job_count})
 
     return JobsResponse(
         company=company,
@@ -111,5 +108,6 @@ def get_jobs_data(
         sample_keywords=sample_keywords,
         locations=locs,
         remote_only=bool(remote),
-        listings=listings[:50],  # cap
+        listings=listings[:50],
+        history=history,
     )

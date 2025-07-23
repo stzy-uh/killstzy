@@ -84,8 +84,8 @@ const JobsPanel: React.FC<{ jobs: any }> = ({ jobs }) => {
       {activeTab === "overview" && (
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
-            <StatBadge label="Open Roles" value={jobs.job_count} />
-            <StatBadge label="Locations" value={jobs.locations?.length || 0} />
+            <StatBadge label="Open Roles" value={jobs.job_count as number} />
+            <StatBadge label="Locations" value={jobs.locations?.length as number} />
             <StatBadge label="Remote Only" value={jobs.remote_only ? "Yes" : "No"} />
           </div>
           {keywordChips.length > 0 ? (
@@ -336,7 +336,7 @@ const App: React.FC = () => {
                   <p className="text-xs text-neutral-400">No recent headlines.</p>
                 )}
                 {news &&
-                  news.slice(0, 6).map((n: any, i: number) => (
+                  news.slice(0, 6).map((n, i) => (
                     <div key={i} className="text-xs">
                       <p className="font-medium line-clamp-2">{n.title}</p>
                       <p className="text-[10px] text-neutral-500">
@@ -358,7 +358,7 @@ const App: React.FC = () => {
                   <p className="text-xs text-neutral-400">No upcoming events.</p>
                 )}
                 {events &&
-                  events.slice(0, 5).map((ev: any, i: number) => (
+                  events.slice(0, 5).map((ev, i) => (
                     <div key={i} className="text-xs">
                       <p className="font-medium">{ev.name}</p>
                       <p className="text-[10px] text-neutral-500">
@@ -383,10 +383,17 @@ const App: React.FC = () => {
                 {scorecard && (
                   <div className="space-y-3">
                     <div className="flex flex-wrap gap-2 mb-2">
-                      <StatBadge label="Composite" value={scorecard.composite as number} />
+                      <StatBadge
+                        label="Composite"
+                        value={scorecard.composite as number}
+                      />
                       {(Object.entries(scorecard.scores || {}) as [string, number][]).map(
                         ([k, v]) => (
-                          <StatBadge key={k} label={k.replace(/_/g, " ")} value={v} />
+                          <StatBadge
+                            key={k}
+                            label={k.replace(/_/g, " ")}
+                            value={v as number}
+                          />
                         )
                       )}
                     </div>
@@ -406,15 +413,27 @@ const App: React.FC = () => {
                 {loading && !financials && <p className="text-xs animate-pulse">Loading…</p>}
                 {financials && (
                   <>
-                    <StatBadge label="Price" value={financials.price} />
-                    <StatBadge label="Δ %" value={financials.change_percent} />
+                    <StatBadge label="Price" value={financials.price as number} />
+                    <StatBadge
+                      label="Δ %"
+                      value={financials.change_percent as number}
+                    />
                     <StatBadge label="Mkt Cap" value={financials.market_cap} />
-                    <StatBadge label="P/E" value={financials.pe} />
-                    <StatBadge label="P/S" value={financials.ps} />
-                    <StatBadge label="P/B" value={financials.pb} />
-                    <StatBadge label="Op Margin %" value={financials.op_margin_pct} />
-                    <StatBadge label="Net Margin %" value={financials.net_margin_pct} />
-                    <StatBadge label="Rev YoY %" value={financials.rev_growth_yoy} />
+                    <StatBadge label="P/E" value={financials.pe as number} />
+                    <StatBadge label="P/S" value={financials.ps as number} />
+                    <StatBadge label="P/B" value={financials.pb as number} />
+                    <StatBadge
+                      label="Op Margin %"
+                      value={financials.op_margin_pct as number}
+                    />
+                    <StatBadge
+                      label="Net Margin %"
+                      value={financials.net_margin_pct as number}
+                    />
+                    <StatBadge
+                      label="Rev YoY %"
+                      value={financials.rev_growth_yoy as number}
+                    />
                     <StatBadge label="Rev TTM" value={financials.rev_ttm} />
                   </>
                 )}
@@ -446,7 +465,9 @@ const App: React.FC = () => {
                   <div className="border rounded p-3">
                     <p className="text-xs font-semibold mb-1">Hiring Trend</p>
                     {jobs?.history ? (
-                      <HiringTrendSparkline data={jobs.history as SparklinePoint[]} />
+                      <HiringTrendSparkline
+                        data={jobs.history as SparklinePoint[]}
+                      />
                     ) : (
                       <p className="text-[10px] text-neutral-500">
                         Provide <code>jobs.history</code> array from backend to see a trend.

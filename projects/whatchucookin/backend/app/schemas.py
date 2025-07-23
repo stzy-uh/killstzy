@@ -1,4 +1,3 @@
-# backend/app/schemas.py
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 
@@ -72,7 +71,7 @@ class JobsResponse(BaseModel):
     sample_keywords: List[str] = []
     locations: List[str] = []
     remote_only: bool = False
-    listings: Optional[List[dict]] = None  # optional detailed job objects
+    listings: Optional[List[dict]] = None  # detailed job objects
 
 
 # ---------------- News ----------------
@@ -99,3 +98,15 @@ class EventItem(BaseModel):
 class EventsResponse(BaseModel):
     company: str
     events: List[EventItem]
+
+
+# ---------------- Data Analysis ----------------
+
+class DataPoint(BaseModel):
+    timestamp: str   # ISO8601
+    value: float
+
+class DataAnalysisResponse(BaseModel):
+    company: str
+    price_history: List[DataPoint]
+    revenue_history: List[DataPoint]

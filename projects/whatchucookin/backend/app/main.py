@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import companies  # only companies now
+# import your companies router (no other routers)
+from app.routers.companies import router as companies_router
 
 app = FastAPI(title="WhatchuCookin API", version="0.1.0")
 
-# CORS so React @5173 can talk here
+# CORS so your React at 5173 can talk here
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -14,14 +15,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount only the companies router
-app.include_router(companies.router, prefix="/companies", tags=["companies"])
+# mount your companies router exactly once under /companies
+app.include_router(companies_router, prefix="/companies", tags=["companies"])
 
 @app.get("/")
 def root():
     return {"message": "Welcome to WhatchuCookin 👀🔥"}
 
-# Optional: show routes on startup
 @app.on_event("startup")
 async def print_routes():
     print("---- ROUTES ----")
